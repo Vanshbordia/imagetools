@@ -26,8 +26,8 @@ A web-based tool for image compression and resizing.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/image-processor.git
-   ```
+    git clone https://github.com/Vanshbordia/imagetools.git
+    ```
 
 2. Navigate to the project directory:
    ```bash
