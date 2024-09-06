@@ -13,6 +13,19 @@ A web-based tool for image compression and resizing.
 - Preview processed images
 - Download individual processed images or all at once
 
+## Upcoming Features
+
+- Background removal tool
+- Image upscaler using AI
+- Color palette extraction from images
+- Bulk image renaming
+- Image cropping and rotation
+- Apply filters and effects (e.g., grayscale, sepia, blur)
+- Metadata viewer and editor
+- Image comparison tool (before/after)
+- Watermark addition
+- OCR (Optical Character Recognition) for text extraction from images
+
 ## Technologies Used
 
 - React
@@ -31,7 +44,7 @@ A web-based tool for image compression and resizing.
 
 2. Navigate to the project directory:
    ```bash
-   cd image-processor
+   cd imagetools 
    ```
 
 3. Install dependencies:
