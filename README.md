@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Image Processor
 
-## Getting Started
+A web-based tool for image compression and resizing.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Upload multiple images via drag-and-drop or file selection
+- Compress images with adjustable quality settings
+- Resize images with preset or custom dimensions
+- Convert images to different formats (JPG, JPEG, PNG, WebP)
+- Set maximum file size for output images
+- Batch process multiple images
+- Preview processed images
+- Download individual processed images or all at once
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technologies Used
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- React
+- Next.js
+- TypeScript
+- browser-image-compression library
+- Lucide React for icons
+- ShadCN for UI
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Installation
 
-## Learn More
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/image-processor.git
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. Navigate to the project directory:
+   ```bash
+   cd image-processor
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+5. Open [http://localhost:3000](http://localhost:3000) in your browser to use the application.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Usage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Upload images by dragging and dropping them into the designated area or clicking to select files.
+2. Choose the desired output format (JPG, JPEG, PNG, or WebP).
+3. Adjust the compression level using the slider.
+4. Enable resizing if needed and select a preset resolution or set a custom width.
+5. Set the maximum file size for the output images.
+6. Click "Process Images" to start the compression and resizing.
+7. Preview the processed images and their new sizes.
+8. Download individual images or use the "Download All" button to get all processed images.
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)

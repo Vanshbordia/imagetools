@@ -1,101 +1,266 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import React, { useState, useCallback } from 'react';
+import imageCompression from 'browser-image-compression';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
+import { Camera, X, Download } from "lucide-react"
+
+export default function Home(params:type) {
+  
+
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [outputFormat, setOutputFormat] = useState('jpeg');
+  const [compressionLevel, setCompressionLevel] = useState(80);
+  const [width, setWidth] = useState(null);
+  const [resizeEnabled, setResizeEnabled] = useState(false);
+  const [processedImages, setProcessedImages] = useState([]);
+  const [maxFileSize, setMaxFileSize] = useState(1024); // 1MB default
+
+  const resolutionPresets = {
+    'Original': 'original',
+    'HD (720p)': 720,
+    'Full HD (1080p)': 1080,
+    'QHD (1440p)': 1440,
+    '4K (2160p)': 2160,
+  };
+
+  const outputFormats = [
+    'jpg', 'jpeg', 'png', 'webp'
+  ];
+
+  const handleFileChange = (event) => {
+    setSelectedFiles([...selectedFiles, ...Array.from(event.target.files)]);
+  };
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setSelectedFiles([...selectedFiles, ...Array.from(e.dataTransfer.files)]);
+  }, [selectedFiles]);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+  }, []);
+
+  const handlePresetChange = (value) => {
+    if (value === 'original') {
+      setResizeEnabled(false);
+      setWidth(null);
+    } else {
+      setResizeEnabled(true);
+      setWidth(parseInt(value));
+    }
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const processImages = async () => {
+    const processedImagesPromises = selectedFiles.map(async (file) => {
+      const options = {
+        maxSizeMB: maxFileSize / 1024,
+        maxWidthOrHeight: resizeEnabled ? width : undefined,
+        useWebWorker: true,
+        fileType: `image/${outputFormat}`,
+        quality: compressionLevel / 100,
+      };
+
+      try {
+        const compressedFile = await imageCompression(file, options);
+        const processedImageUrl = URL.createObjectURL(compressedFile);
+        const img = new Image();
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.src = processedImageUrl;
+        });
+
+        return {
+          original: file,
+          processed: processedImageUrl,
+          size: compressedFile.size,
+          width: img.width,
+          height: img.height
+        };
+      } catch (error) {
+        console.error('Error processing image:', error);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(processedImagesPromises);
+    setProcessedImages(results.filter(result => result !== null));
+  };
+
+  const downloadAll = () => {
+    processedImages.forEach((image) => {
+      const link = document.createElement('a');
+      link.href = image.processed;
+      link.download = `${image.original.name.split('.')[0]}_${image.width}x${image.height}.${outputFormat}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="flex h-screen overflow-hidden">
+      <div className="w-1/3 p-6 overflow-y-auto sticky top-0 h-screen">
+        <h1 className="text-2xl font-bold mb-6">Image Processor</h1>
+        
+        <div className="mb-4">
+          <Label htmlFor="image-upload">Upload Images</Label>
+          <div 
+            className="border-2 border-dashed border-gray-300 p-4 text-center cursor-pointer"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+            <Input 
+              id="image-upload" 
+              type="file" 
+              onChange={handleFileChange} 
+              accept="image/*"
+              multiple
+              className="hidden"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <Label htmlFor="image-upload" className="cursor-pointer">
+              <Camera className="mx-auto text-gray-400" />
+              <p>Click to upload or drag and drop</p>
+            </Label>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {selectedFiles.length > 0 && (
+          <div className="mb-4">
+            <h3 className="font-semibold mb-2">Selected Files:</h3>
+            {selectedFiles.map((file, index) => (
+              <div key={index} className="flex justify-between items-center mb-1">
+                <span>{file.name}</span>
+                <Button variant="ghost" size="sm" onClick={() => removeFile(index)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <div className="mb-4">
+          <Label htmlFor="output-format">Output Format</Label>
+          <Select onValueChange={setOutputFormat} defaultValue={outputFormat}>
+            <SelectTrigger id="output-format">
+              <SelectValue placeholder="Select format" />
+            </SelectTrigger>
+            <SelectContent>
+              {outputFormats.map(format => (
+                <SelectItem key={format} value={format}>{format.toUpperCase()}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="mb-4">
+          <Label htmlFor="compression">Compression Level: {compressionLevel}%</Label>
+          <Slider
+            id="compression"
+            min={0}
+            max={100}
+            step={1}
+            value={[compressionLevel]}
+            onValueChange={(value) => setCompressionLevel(value[0])}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+        </div>
+        
+        <div className="mb-4 flex items-center space-x-2">
+          <Switch
+            id="resize-switch"
+            checked={resizeEnabled}
+            onCheckedChange={setResizeEnabled}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+          <Label htmlFor="resize-switch">Enable Resizing</Label>
+        </div>
+        
+        {resizeEnabled && (
+          <>
+            <div className="mb-4">
+              <Label htmlFor="preset">Preset Resolutions</Label>
+              <Select onValueChange={handlePresetChange}>
+                <SelectTrigger id="preset">
+                  <SelectValue placeholder="Select preset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(resolutionPresets).map(([name, value]) => (
+                    <SelectItem key={name} value={value.toString()}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="mb-4">
+              <Label htmlFor="width">Width: {width || 'Original'}</Label>
+              <Slider
+                id="width"
+                min={50}
+                max={3840}
+                step={10}
+                value={[width || 0]}
+                onValueChange={(value) => setWidth(value[0])}
+                disabled={!resizeEnabled}
+              />
+            </div>
+          </>
+        )}
+
+        <div className="mb-4">
+          <Label htmlFor="max-size">Max File Size (KB): {maxFileSize}</Label>
+          <Slider
+            id="max-size"
+            min={100}
+            max={10240}
+            step={100}
+            value={[maxFileSize]}
+            onValueChange={(value) => setMaxFileSize(value[0])}
           />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+        
+        <Button onClick={processImages} className="w-full mb-2" disabled={selectedFiles.length === 0}>
+          Process Images
+        </Button>
+
+        {processedImages.length > 0 && (
+          <Button onClick={downloadAll} className="w-full" variant="outline">
+            <Download className="mr-2 h-4 w-4" /> Download All
+          </Button>
+        )}
+      </div>
+      
+      <div className="w-2/3 p-6 overflow-y-auto h-screen">
+        {processedImages.length > 0 ? (
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Processed Images</h2>
+            {processedImages.map((image, index) => (
+              <div key={index} className="mb-4">
+                <img src={image.processed} alt={`Processed ${index}`} className="max-w-full h-auto mb-2" />
+                <div className="flex justify-between items-center">
+                  <span>Size: {(image.size / 1024).toFixed(2)} KB | Dimensions: {image.width}x{image.height}</span>
+                  <a href={image.processed} download={`${image.original.name.split('.')[0]}_${image.width}x${image.height}.${outputFormat}`}>
+                    <Button variant="outline">Download</Button>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">Processed images will appear here</p>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+
