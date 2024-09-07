@@ -22,8 +22,10 @@
     "embla-carousel-react": "^8.2.1",
     "lucide-react": "^0.439.0",
     "next": "14.2.8",
+    "quantize": "^1.0.2",
     "react": "^18",
     "react-dom": "^18",
+    "rgbquant": "^1.1.2",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7"
   },
