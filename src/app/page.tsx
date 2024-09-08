@@ -10,18 +10,30 @@ import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Camera, X, Download } from "lucide-react"
 
-export default function Home(params:type) {
-  
+type ProcessedImage = {
+  original: File;
+  processed: string;
+  size: number;
+  width: number;
+  height: number;
+};
+type CompressionOptions = {
+  maxSizeMB: number;
+  maxWidthOrHeight?: number;
+  useWebWorker: boolean;
+  fileType?: string;
+  quality?: number;
+};
+export default function Home() {
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [outputFormat, setOutputFormat] = useState<string>('jpeg');
+  const [compressionLevel, setCompressionLevel] = useState<number>(80);
+  const [width, setWidth] = useState<number | null>(null);
+  const [resizeEnabled, setResizeEnabled] = useState<boolean>(false);
+  const [processedImages, setProcessedImages] = useState<ProcessedImage[]>([]);
+  const [maxFileSize, setMaxFileSize] = useState<number>(102400); // 1MB default
 
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [outputFormat, setOutputFormat] = useState('jpeg');
-  const [compressionLevel, setCompressionLevel] = useState(80);
-  const [width, setWidth] = useState(null);
-  const [resizeEnabled, setResizeEnabled] = useState(false);
-  const [processedImages, setProcessedImages] = useState([]);
-  const [maxFileSize, setMaxFileSize] = useState(1024); // 1MB default
-
-  const resolutionPresets = {
+  const resolutionPresets: Record<string, number | 'original'> = {
     'Original': 'original',
     'HD (720p)': 720,
     'Full HD (1080p)': 1080,
@@ -33,20 +45,24 @@ export default function Home(params:type) {
     'jpg', 'jpeg', 'png', 'webp'
   ];
 
-  const handleFileChange = (event) => {
-    setSelectedFiles([...selectedFiles, ...Array.from(event.target.files)]);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files);
+      setSelectedFiles((prev) => [...prev, ...newFiles]);
+    }
   };
 
-  const handleDrop = useCallback((e) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setSelectedFiles([...selectedFiles, ...Array.from(e.dataTransfer.files)]);
-  }, [selectedFiles]);
+    const droppedFiles = Array.from(e.dataTransfer.files).filter((file): file is File => file instanceof File);
+    setSelectedFiles((prev) => [...prev, ...droppedFiles]);
+  }, []);
 
-  const handleDragOver = useCallback((e) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   }, []);
 
-  const handlePresetChange = (value) => {
+  const handlePresetChange = (value: string) => {
     if (value === 'original') {
       setResizeEnabled(false);
       setWidth(null);
@@ -56,15 +72,15 @@ export default function Home(params:type) {
     }
   };
 
-  const removeFile = (index) => {
+  const removeFile = (index: number) => {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
   };
 
   const processImages = async () => {
     const processedImagesPromises = selectedFiles.map(async (file) => {
-      const options = {
+      const options: CompressionOptions = {
         maxSizeMB: maxFileSize / 1024,
-        maxWidthOrHeight: resizeEnabled ? width : undefined,
+        maxWidthOrHeight: resizeEnabled && width ? width : undefined,
         useWebWorker: true,
         fileType: `image/${outputFormat}`,
         quality: compressionLevel / 100,
@@ -74,8 +90,8 @@ export default function Home(params:type) {
         const compressedFile = await imageCompression(file, options);
         const processedImageUrl = URL.createObjectURL(compressedFile);
         const img = new Image();
-        await new Promise((resolve) => {
-          img.onload = resolve;
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
           img.src = processedImageUrl;
         });
 
@@ -93,9 +109,8 @@ export default function Home(params:type) {
     });
 
     const results = await Promise.all(processedImagesPromises);
-    setProcessedImages(results.filter(result => result !== null));
+    setProcessedImages(results.filter((result): result is ProcessedImage => result !== null));
   };
-
   const downloadAll = () => {
     processedImages.forEach((image) => {
       const link = document.createElement('a');
@@ -106,7 +121,6 @@ export default function Home(params:type) {
       document.body.removeChild(link);
     });
   };
-
   return (
     <div className="flex h-screen overflow-hidden">
       <div className="w-1/3 p-6 overflow-y-auto sticky top-0 h-screen">

@@ -1,31 +1,17 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Upload, Camera, Download ,X} from "lucide-react";
+import { Loader2, Upload, Camera, Download, X } from "lucide-react";
+import { removeBackground } from '@imgly/background-removal';
 
 export default function Page() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [processedImages, setProcessedImages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [removeBackground, setRemoveBackground] = useState<any>(null);
-
-  useEffect(() => {
-    const loadBackgroundRemoval = async () => {
-      try {
-        const module = await import('@imgly/background-removal');
-        setRemoveBackground(() => module.removeBackground);
-      } catch (err) {
-        console.error("Failed to load @imgly/background-removal:", err);
-        setError("Failed to load background removal tool. Please try again later.");
-      }
-    };
-
-    loadBackgroundRemoval();
-  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -47,7 +33,7 @@ export default function Page() {
   };
 
   const handleRemoveBackground = async () => {
-    if (selectedFiles.length === 0 || !removeBackground) return;
+    if (selectedFiles.length === 0) return;
 
     setIsProcessing(true);
     setError(null);
@@ -69,7 +55,7 @@ export default function Page() {
     }
   };
 
-  const handleDownload = (imageUrl, index) => {
+  const handleDownload = (imageUrl: string, index: number) => {
     const originalFileName = selectedFiles[index].name;
     const fileExtension = originalFileName.split('.').pop();
     const newFileName = `${originalFileName.replace(`.${fileExtension}`, '')}_removedbg.png`;
@@ -86,7 +72,6 @@ export default function Page() {
         document.body.removeChild(link);
       });
   };
-
   return (
     <div className="flex h-screen overflow-hidden">
       <div className="w-1/3 p-6 overflow-y-auto sticky top-0 h-screen">
@@ -206,5 +191,4 @@ export default function Page() {
     </div>
   );
 };
-
 
